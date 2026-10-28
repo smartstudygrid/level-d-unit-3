@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocabulary Workshop - Level D Unit 3</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style type="text/tailwindcss">
+  body{font-family:'Plus Jakarta Sans',sans-serif;padding-bottom:env(safe-area-inset-bottom,0)}
+  h1,h2,h3,.hd{font-family:'Outfit',sans-serif}
+  .card{@apply bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5}
+  .btn{@apply px-4 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 transition}
+  .btn2{@apply px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700}
+  .chip{@apply px-2 py-0.5 rounded-lg text-[11px] font-bold border}
+  .opt{@apply w-full text-left p-3 rounded-2xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-semibold text-sm hover:border-indigo-400 transition}
+  .tab{@apply px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-200 whitespace-nowrap hover:bg-indigo-800/60}
+  .tab.on{@apply bg-indigo-600 text-white}
+  .hl{@apply text-indigo-600 dark:text-indigo-300 font-extrabold underline decoration-amber-400}
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen">
+
+<header class="bg-indigo-900 dark:bg-slate-900 text-white sticky top-0 z-40 shadow-md" style="padding-top:env(safe-area-inset-top,0)">
+  <div class="max-w-5xl mx-auto px-4 py-2.5">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex gap-1.5 text-[10px] font-bold uppercase tracking-wider"><span class="bg-indigo-950 px-2 py-0.5 rounded-md text-indigo-200">Level D</span><span class="bg-emerald-950 px-2 py-0.5 rounded-md text-emerald-300" id="unit-badge">Unit 3</span></div>
+        <h1 class="text-lg font-extrabold">Vocabulary Workshop Hub</h1>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-bold">
+        <span class="text-amber-300"><i class="fa-solid fa-star"></i> <b id="h-star">0</b></span>
+        <span class="text-emerald-300"><i class="fa-solid fa-trophy"></i> <b id="h-mast">0%</b></span>
+        <button onclick="toggleDark()" class="w-8 h-8 rounded-xl bg-indigo-800 dark:bg-slate-800 text-amber-300"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      </div>
+    </div>
+    <nav class="flex gap-1 mt-2 overflow-x-auto pb-1" id="nav">
+      <button class="tab on" data-v="dash" onclick="show('dash')"><i class="fa-solid fa-border-all"></i> Dashboard</button>
+      <button class="tab" data-v="flash" onclick="show('flash')"><i class="fa-solid fa-clone"></i> Flashcards</button>
+      <button class="tab" data-v="quiz" onclick="show('quiz')"><i class="fa-solid fa-pen-to-square"></i> Quizzes</button>
+      <button class="tab" data-v="scr" onclick="show('scr')"><i class="fa-solid fa-font"></i> Unscramble</button>
+      <button class="tab" data-v="prog" onclick="show('prog')"><i class="fa-solid fa-chart-line"></i> Progress</button>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+
+  <!-- DASHBOARD -->
+  <section id="v-dash" class="space-y-4">
+    <div class="rounded-3xl p-6 text-white bg-gradient-to-r from-indigo-700 to-purple-800 shadow-xl">
+      <h2 class="text-3xl font-extrabold">Unit 3 Vocabulary Hub</h2>
+      <p class="text-indigo-100 text-sm mt-1">Definitions, examples, synonyms and antonyms for all 20 words, with pronunciation.</p>
+    </div>
+    <div class="card flex flex-col md:flex-row gap-3 !p-3">
+      <input id="search" oninput="renderDash()" placeholder="Search word or definition..." class="flex-1 px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm">
+      <div class="flex gap-2 flex-wrap">
+        <button class="btn" data-f="all" onclick="setF('all')">All</button>
+        <button class="btn2" data-f="star" onclick="setF('star')">Starred</button>
+        <button class="btn2" data-f="mast" onclick="setF('mast')">Mastered</button>
+      </div>
+    </div>
+    <div id="grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+  </section>
+
+  <!-- FLASHCARDS -->
+  <section id="v-flash" class="hidden max-w-2xl mx-auto space-y-4">
+    <div class="card !p-3 flex items-center justify-between flex-wrap gap-2">
+      <span id="fc-count" class="text-xs font-bold"></span>
+      <div class="flex gap-2">
+        <button class="btn2" onclick="fcShuffle()"><i class="fa-solid fa-shuffle"></i></button>
+        <button class="btn2" id="fc-mast" onclick="fcMast()"></button>
+        <button class="btn2" id="fc-star" onclick="fcStar()"><i class="fa-solid fa-star"></i></button>
+      </div>
+    </div>
+    <div onclick="fcFlip()" class="card min-h-[380px] cursor-pointer flex flex-col justify-between border-t-8 !border-t-indigo-500">
+      <div id="fc-front" class="my-auto text-center space-y-3"></div>
+      <div id="fc-back" class="hidden my-auto space-y-3 text-sm"></div>
+      <p class="text-center text-[11px] font-bold text-slate-400"><i class="fa-solid fa-rotate"></i> Tap card to flip</p>
+    </div>
+    <div class="flex justify-between"><button class="btn2" onclick="fcMove(-1)"><i class="fa-solid fa-arrow-left"></i> Previous</button><button class="btn" onclick="fcMove(1)">Next <i class="fa-solid fa-arrow-right"></i></button></div>
+  </section>
+
+  <!-- QUIZZES -->
+  <section id="v-quiz" class="hidden max-w-2xl mx-auto space-y-4">
+    <div id="q-setup" class="card text-center space-y-4">
+      <h2 class="text-2xl font-extrabold">Choose an Assessment</h2>
+      <p class="text-sm text-slate-500">10 randomized questions with instant feedback.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <button class="btn !py-3 !px-6" onclick="startQuiz('def')"><i class="fa-solid fa-pen-ruler"></i> Definition Quiz</button>
+        <button class="btn !py-3 !px-6 !bg-purple-600" onclick="startQuiz('ccq')"><i class="fa-solid fa-lightbulb"></i> CCQ Concept Quiz</button>
+      </div>
+      <p class="text-xs text-slate-400">CCQs: short concept-checking questions that avoid the target word.</p>
+    </div>
+    <div id="q-run" class="hidden space-y-3">
+      <div class="card !p-3 flex justify-between text-xs font-extrabold"><span id="q-prog"></span><span id="q-streak" class="text-amber-600"></span><span id="q-score" class="text-emerald-600"></span></div>
+      <div class="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full"><div id="q-bar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width:0"></div></div>
+      <div class="card space-y-3">
+        <span id="q-type" class="chip bg-indigo-50 text-indigo-600 border-indigo-200"></span>
+        <div id="q-prompt" class="text-base font-bold leading-snug"></div>
+        <div id="q-opts" class="grid sm:grid-cols-2 gap-2.5"></div>
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+          <span id="q-fb" class="text-xs font-bold"></span>
+          <button id="q-next" class="btn opacity-40" disabled onclick="nextQ()">Next</button>
+        </div>
+      </div>
+    </div>
+    <div id="q-end" class="hidden card text-center space-y-4">
+      <i class="fa-solid fa-trophy text-4xl text-amber-500"></i>
+      <h2 class="text-2xl font-extrabold">Assessment Complete</h2>
+      <div id="q-pct" class="text-5xl font-extrabold text-indigo-600 hd"></div>
+      <p id="q-sum" class="text-sm text-slate-500"></p>
+      <div class="flex gap-2 justify-center"><button class="btn" onclick="startQuiz(Q.mode)">Retake</button><button class="btn2" onclick="resetQuiz()">Back</button></div>
+    </div>
+  </section>
+
+  <!-- UNSCRAMBLE -->
+  <section id="v-scr" class="hidden max-w-2xl mx-auto">
+    <div class="card space-y-4">
+      <h2 class="text-2xl font-extrabold">Word Unscramble</h2>
+      <div class="bg-purple-50 dark:bg-purple-950/40 p-3 rounded-2xl text-center text-sm font-semibold" id="sc-def"></div>
+      <div id="sc-slots" class="flex flex-wrap gap-2 justify-center min-h-[52px] p-2 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700"></div>
+      <div id="sc-bank" class="flex flex-wrap gap-2 justify-center min-h-[52px]"></div>
+      <div class="flex justify-between items-center"><span id="sc-fb" class="text-xs font-bold"></span><div class="flex gap-2"><button class="btn2" onclick="scReset()">Clear</button><button class="btn" onclick="scInit()">Next Word</button></div></div>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="v-prog" class="hidden space-y-4">
+    <div class="card space-y-3">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="text-2xl font-extrabold">Progress Report</h2>
+        <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+      </div>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3"><div class="text-[10px] font-bold uppercase text-slate-400">Mastery</div><div id="p-m" class="text-2xl font-extrabold text-emerald-600"></div></div>
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3"><div class="text-[10px] font-bold uppercase text-slate-400">Starred</div><div id="p-s" class="text-2xl font-extrabold text-amber-500"></div></div>
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-3"><div class="text-[10px] font-bold uppercase text-slate-400">Best Quiz</div><div id="p-q" class="text-sm font-extrabold text-indigo-600"></div></div>
+      </div>
+      <div class="overflow-x-auto"><table class="w-full text-xs text-left"><thead><tr class="bg-slate-100 dark:bg-slate-800"><th class="p-2">#</th><th class="p-2">Word</th><th class="p-2">POS</th><th class="p-2">Status</th><th class="p-2">Starred</th></tr></thead><tbody id="p-body"></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<footer class="text-center text-xs text-slate-500 py-6">Vocabulary Workshop Level D Unit 3 Interactive Companion &middot; Created by Amanullah Khan</footer>
+
+<script>
+const KEY='sadlier_u3_';
+const W=[
+{id:1,word:"abridge",pos:"verb",def:"To shorten a text or work by leaving out parts; to cut down or reduce.",ex:"The publisher decided to abridge the 900-page novel for younger readers.",syn:["condense","shorten","cut","reduce"],ant:["expand","lengthen","enlarge"],ccq:["Do you make something longer or shorter? (Shorter)","Does the main story stay while some parts are left out? (Yes)","Do you add extra chapters? (No)"]},
+{id:2,word:"adherent",pos:"noun",def:"A supporter or follower of a person, cause, or belief.",ex:"Every adherent of the club cheered when the team lifted the trophy.",syn:["follower","supporter","disciple","devotee"],ant:["opponent","critic","adversary"],ccq:["Does this person support an idea, or fight against it? (Support it)","Is a loyal fan or follower an example? (Yes)","Is this person an enemy of the cause? (No)"]},
+{id:3,word:"altercation",pos:"noun",def:"A noisy, angry argument or quarrel.",ex:"A brief altercation over the parking space ended when the guard arrived.",syn:["dispute","quarrel","squabble","wrangle"],ant:["harmony","agreement","peace"],ccq:["Is it a calm chat or a loud, angry argument? (Loud, angry argument)","Might two drivers shout over a parking spot? (Yes)","Do the people agree happily? (No)"]},
+{id:4,word:"cherubic",pos:"adjective",def:"Sweet, innocent, and angelic in appearance, like a chubby-faced child.",ex:"The baby's cherubic smile melted everyone in the waiting room.",syn:["angelic","innocent","sweet","adorable"],ant:["devilish","wicked","fiendish"],ccq:["Does the face look sweet and innocent, or mean? (Sweet and innocent)","Can a round-cheeked baby look like this? (Yes)","Does it describe a wicked person? (No)"]},
+{id:5,word:"condone",pos:"verb",def:"To forgive, overlook, or accept behavior that is wrong, as if it were acceptable.",ex:"The school will not condone cheating under any circumstances.",syn:["excuse","overlook","pardon","tolerate"],ant:["condemn","forbid","denounce"],ccq:["Do you punish bad behavior, or let it pass? (Let it pass)","Is saying 'it's fine, I'll ignore it' an example? (Yes)","Does it mean to strongly forbid something? (No)"]},
+{id:6,word:"dissent",pos:"verb / noun",def:"(v.) To disagree or differ in opinion; (n.) a difference of opinion, especially against the majority.",ex:"Two judges voted to dissent from the court's final decision.",syn:["disagree","differ","object","protest"],ant:["agree","consent","conform"],ccq:["Do you share the same opinion as the group, or differ? (Differ)","Can a person raise a hand and say 'I disagree'? (Yes)","Does everyone agree? (No)"]},
+{id:7,word:"eminent",pos:"adjective",def:"High in rank or reputation; distinguished and well known.",ex:"An eminent surgeon was invited to speak at the medical conference.",syn:["distinguished","prominent","renowned","famous"],ant:["unknown","obscure","lowly"],ccq:["Is the person unknown, or famous and respected? (Famous and respected)","Might a top scientist or doctor be described this way? (Yes)","Is the person humble and unnoticed? (No)"]},
+{id:8,word:"exorcise",pos:"verb",def:"To drive out an evil spirit; to get rid of something harmful or troubling.",ex:"He tried to exorcise his fear of public speaking by joining the debate team.",syn:["expel","banish","purge","drive out"],ant:["summon","invite","conjure"],ccq:["Do you invite a bad spirit in, or force it out? (Force it out)","Can a person do this to a haunting fear? (Yes)","Does it mean to welcome something in? (No)"]},
+{id:9,word:"fabricate",pos:"verb",def:"To build or manufacture; to make up a false story or excuse.",ex:"The student tried to fabricate an excuse for his missing homework.",syn:["invent","construct","manufacture","concoct"],ant:["demolish","dismantle","expose"],ccq:["Can you make a thing in a factory with this word? (Yes)","If someone makes up a false story, is it true? (No)","Does it mean to tell the plain truth? (No)"]},
+{id:10,word:"gluttony",pos:"noun",def:"The habit of eating or drinking far too much; greed for food.",ex:"The holiday feast ended in gluttony, with guests too full to stand.",syn:["overeating","greed","voracity","excess"],ant:["moderation","abstinence","fasting"],ccq:["Do you eat a normal amount, or far too much? (Far too much)","Does a person who always overfills the plate show it? (Yes)","Is it careful, small eating? (No)"]},
+{id:11,word:"irate",pos:"adjective",def:"Extremely angry; enraged.",ex:"The irate customer demanded to speak with the manager at once.",syn:["furious","enraged","livid","incensed"],ant:["calm","pleased","placid"],ccq:["Is the person happy, or very angry? (Very angry)","Might their face turn red and their voice get loud? (Yes)","Is the person calm and relaxed? (No)"]},
+{id:12,word:"marauder",pos:"noun",def:"A raider who roams about in search of people or places to attack and steal from.",ex:"Villagers built high walls to keep out every marauder from the hills.",syn:["raider","plunderer","bandit","looter"],ant:["protector","defender","guardian"],ccq:["Does this person guard a village, or attack it for loot? (Attack it for loot)","Do they travel around looking for targets? (Yes)","Is this person a protector? (No)"]},
+{id:13,word:"pauper",pos:"noun",def:"A very poor person, especially one who depends on charity.",ex:"The story tells of a prince who swaps clothes with a pauper.",syn:["beggar","indigent","have-not","poor person"],ant:["millionaire","tycoon","magnate"],ccq:["Is this person rich, or extremely poor? (Extremely poor)","Might they need charity to get food? (Yes)","Is this person wealthy? (No)"]},
+{id:14,word:"pilfer",pos:"verb",def:"To steal small amounts or small items, often repeatedly.",ex:"Someone began to pilfer pens and snacks from the staff room.",syn:["filch","swipe","snitch","purloin"],ant:["return","restore","donate"],ccq:["Is it a huge bank robbery, or taking small things? (Taking small things)","Is it done secretly? (Yes)","Do you give the items back? (No)"]},
+{id:15,word:"rift",pos:"noun",def:"A split or break, either in the ground or in a friendship or group.",ex:"A bitter argument created a rift between the two old friends.",syn:["split","breach","gap","division"],ant:["union","bond","reconciliation"],ccq:["Is it a joining together, or a split? (A split)","Can a crack in the earth be one? (Yes)","Can friends who stop speaking have one between them? (Yes)"]},
+{id:16,word:"semblance",pos:"noun",def:"An outward appearance, often a slight or false one; a likeness.",ex:"After the storm, the town slowly regained some semblance of normal life.",syn:["appearance","guise","pretense","likeness"],ant:["reality","substance","truth"],ccq:["Is it the real thing, or only how it looks? (Only how it looks)","Might a calm face hide a nervous person? (Yes)","Is it complete and genuine reality? (No)"]},
+{id:17,word:"surmount",pos:"verb",def:"To overcome or get past a difficulty; to climb over.",ex:"She worked hard to surmount every obstacle on her way to university.",syn:["overcome","conquer","vault","master"],ant:["succumb","yield","surrender"],ccq:["Do you give up when a problem appears, or beat it? (Beat it)","Can you do this to a high wall or a hard challenge? (Yes)","Does the problem defeat you? (No)"]},
+{id:18,word:"terminate",pos:"verb",def:"To bring to an end; to stop or finish.",ex:"The company will terminate the contract if payments are late.",syn:["end","conclude","cease","finish"],ant:["begin","start","initiate"],ccq:["Do you start something, or bring it to an end? (Bring it to an end)","Can an employer do it to a work contract? (Yes)","Does the activity continue? (No)"]},
+{id:19,word:"trite",pos:"adjective",def:"Overused and therefore stale; lacking originality.",ex:"The speech was full of trite phrases like 'follow your dreams'.",syn:["hackneyed","stale","corny","stereotyped"],ant:["fresh","original","novel"],ccq:["Is the idea fresh and new, or heard a thousand times? (Heard a thousand times)","Is a boring, overused saying an example? (Yes)","Is it original? (No)"]},
+{id:20,word:"usurp",pos:"verb",def:"To seize a position, power, or right by force or without legal right.",ex:"The general plotted to usurp the throne from the young king.",syn:["seize","grab","take over","commandeer"],ant:["yield","cede","relinquish"],ccq:["Do you earn power fairly, or grab it wrongly? (Grab it wrongly)","Might someone do this to a king's throne? (Yes)","Do you hand power over willingly? (No)"]}
+];
+
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(KEY+k))??d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){}};
+let S={star:load('star',[]),mast:load('mast',[]),best:load('best',null),dark:load('dark',false),f:'all',fc:0};
+
+/* ---------- audio ---------- */
+let AC;
+function tone(f1,f2,d,type){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.01,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
+const chime=()=>tone(523,880,.3,'sine'), buzz=()=>tone(160,100,.3,'sawtooth');
+function speak(w){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(w);u.lang='en-US';u.rate=.85;const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith('en')&&/Google|Natural|Samantha|Siri/.test(v.name))||speechSynthesis.getVoices().find(v=>v.lang.startsWith('en'));if(v)u.voice=v;speechSynthesis.speak(u)}
+
+/* ---------- theme / nav ---------- */
+function applyDark(){document.documentElement.classList.toggle('dark',S.dark)}
+function toggleDark(){S.dark=!S.dark;save('dark',S.dark);applyDark()}
+function show(v){
+  ['dash','flash','quiz','scr','prog'].forEach(x=>$('v-'+x).classList.toggle('hidden',x!==v));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  if(v==='dash')renderDash(); if(v==='flash')fcLoad(S.fc); if(v==='scr')scInit(); if(v==='prog')renderProg();
+}
+function stats(){
+  const m=Math.round(S.mast.length/W.length*100);
+  $('h-star').textContent=S.star.length;$('h-mast').textContent=m+'%';
+}
+function persist(){save('star',S.star);save('mast',S.mast);stats()}
+const toggle=(arr,id)=>{const i=arr.indexOf(id);i>=0?arr.splice(i,1):arr.push(id)};
+const hl=w=>w.ex.replace(new RegExp('('+w.word+'\\w*)','gi'),'<span class="hl">$1</span>');
+const chips=(a,c)=>a.map(s=>`<span class="chip ${c}">${s}</span>`).join('');
+const SYN='bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800';
+const ANT='bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800';
+
+/* ---------- dashboard ---------- */
+function setF(f){S.f=f;document.querySelectorAll('[data-f]').forEach(b=>b.className=b.dataset.f===f?'btn':'btn2');renderDash()}
+function renderDash(){
+  const q=$('search').value.toLowerCase().trim();
+  const list=W.filter(w=>(w.word+w.def).toLowerCase().includes(q)&&(S.f==='all'||(S.f==='star'?S.star:S.mast).includes(w.id)));
+  $('grid').innerHTML=list.length?list.map(w=>{
+    const m=S.mast.includes(w.id),s=S.star.includes(w.id);
+    return `<div class="card border-2 ${m?'!border-emerald-400':''} flex flex-col gap-3">
+      <div class="flex justify-between items-center">
+        <div class="flex gap-2 items-center"><span class="chip bg-indigo-600 text-white border-indigo-600 font-mono">#${w.id}</span><span class="chip bg-indigo-50 text-indigo-700 border-indigo-200 uppercase">${w.pos}</span></div>
+        <div class="flex gap-1"><button onclick="tM(${w.id})" class="text-lg ${m?'text-emerald-500':'text-slate-300'}"><i class="fa-solid fa-circle-check"></i></button><button onclick="tS(${w.id})" class="text-lg ${s?'text-amber-400':'text-slate-300'}"><i class="fa-solid fa-star"></i></button></div>
+      </div>
+      <div class="flex items-center gap-2"><h3 class="text-3xl font-extrabold capitalize">${w.word}</h3><button onclick="speak('${w.word}')" class="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600"><i class="fa-solid fa-volume-high text-sm"></i></button></div>
+      <p class="text-sm font-semibold">${w.def}</p>
+      <p class="text-xs italic bg-indigo-50/70 dark:bg-slate-800 p-3 rounded-2xl">${hl(w)}</p>
+      <div class="flex flex-wrap gap-1 items-center"><i class="fa-solid fa-layer-group text-emerald-500 text-xs"></i>${chips(w.syn,SYN)}</div>
+      <div class="flex flex-wrap gap-1 items-center"><i class="fa-solid fa-arrows-left-right text-rose-500 text-xs"></i>${chips(w.ant,ANT)}</div>
+    </div>`}).join(''):'<p class="col-span-full text-center text-sm text-slate-500 py-10">No matching words.</p>';
+}
+function tS(id){toggle(S.star,id);persist();renderDash()}
+function tM(id){toggle(S.mast,id);persist();renderDash()}
+
+/* ---------- flashcards ---------- */
+let flipped=false;
+function fcLoad(i){
+  S.fc=(i+W.length)%W.length;const w=W[S.fc];flipped=false;
+  $('fc-front').classList.remove('hidden');$('fc-back').classList.add('hidden');
+  $('fc-count').textContent=`#${w.id} · Card ${S.fc+1} of ${W.length}`;
+  $('fc-front').innerHTML=`<span class="chip bg-indigo-50 text-indigo-700 border-indigo-200 uppercase">${w.pos}</span>
+    <h3 class="text-4xl font-extrabold capitalize">${w.word}</h3>
+    <button onclick="event.stopPropagation();speak('${w.word}')" class="btn2"><i class="fa-solid fa-volume-high"></i> Pronounce</button>`;
+  $('fc-back').innerHTML=`<div class="flex justify-between items-center"><h4 class="text-2xl font-extrabold capitalize text-indigo-600">${w.word} <span class="text-xs italic text-slate-400">(${w.pos})</span></h4><button onclick="event.stopPropagation();speak('${w.word}')" class="btn2"><i class="fa-solid fa-volume-high"></i></button></div>
+    <p class="font-bold">${w.def}</p><p class="italic text-xs bg-indigo-50/70 dark:bg-slate-800 p-3 rounded-2xl">${hl(w)}</p>
+    <div class="flex flex-wrap gap-1">${chips(w.syn,SYN)}</div><div class="flex flex-wrap gap-1">${chips(w.ant,ANT)}</div>`;
+  const m=S.mast.includes(w.id);
+  $('fc-mast').innerHTML=m?'<i class="fa-solid fa-circle-check text-emerald-500"></i> Mastered':'<i class="fa-regular fa-circle-check"></i> Mark Mastered';
+  $('fc-star').firstElementChild.style.color=S.star.includes(w.id)?'#fbbf24':'';
+}
+function fcFlip(){flipped=!flipped;$('fc-front').classList.toggle('hidden',flipped);$('fc-back').classList.toggle('hidden',!flipped)}
+const fcMove=d=>fcLoad(S.fc+d), fcShuffle=()=>fcLoad(Math.floor(Math.random()*W.length));
+function fcStar(){toggle(S.star,W[S.fc].id);persist();fcLoad(S.fc)}
+function fcMast(){toggle(S.mast,W[S.fc].id);persist();fcLoad(S.fc)}
+
+/* ---------- quizzes (definition + CCQ) ---------- */
+let Q={mode:'def'};
+function resetQuiz(){['q-run','q-end'].forEach(x=>$(x).classList.add('hidden'));$('q-setup').classList.remove('hidden')}
+function startQuiz(mode){
+  Q={mode,i:0,score:0,streak:0,correct:0,done:false,
+     qs:shuffle(W).slice(0,10).map(t=>({t,isDef:Math.random()>.5,opts:shuffle([t,...shuffle(W.filter(v=>v!==t)).slice(0,3)])}))};
+  $('q-setup').classList.add('hidden');$('q-end').classList.add('hidden');$('q-run').classList.remove('hidden');renderQ();
+}
+function renderQ(){
+  const q=Q.qs[Q.i];Q.done=false;
+  $('q-prog').textContent=`Question ${Q.i+1} of 10`;$('q-streak').textContent=`Streak: ${Q.streak}`;$('q-score').textContent=`${Q.score} pts`;
+  $('q-bar').style.width=(Q.i/10*100)+'%';$('q-fb').textContent='';
+  const nb=$('q-next');nb.disabled=true;nb.classList.add('opacity-40');
+  const word=q.t.word;
+  if(Q.mode==='ccq'){
+    $('q-type').textContent='CCQ Concept Check';
+    $('q-prompt').innerHTML='<div class="space-y-1.5 bg-purple-50 dark:bg-purple-950/30 p-3 rounded-2xl text-sm">'+q.t.ccq.map((c,i)=>`<div><b class="text-purple-600">${i+1}.</b> ${c}</div>`).join('')+'</div><p class="mt-3 text-sm">Which vocabulary word matches all the concept checks?</p>';
+  }else if(q.isDef){
+    $('q-type').textContent='Word to Definition';
+    $('q-prompt').innerHTML=`What is the definition of <span class="text-indigo-600 capitalize font-extrabold">${word}</span>?`;
+  }else{
+    $('q-type').textContent='Definition to Word';
+    $('q-prompt').innerHTML=`Which word matches: <i class="font-normal">"${q.t.def}"</i>`;
+  }
+  const asDef=Q.mode==='def'&&q.isDef;
+  $('q-opts').innerHTML=q.opts.map(o=>`<button class="opt" data-id="${o.id}" onclick="answer(${o.id},this)"><span class="${asDef?'text-xs':'capitalize font-bold'}">${asDef?o.def:o.word}</span></button>`).join('');
+}
+function answer(id,btn){
+  if(Q.done)return;Q.done=true;
+  const q=Q.qs[Q.i],ok=id===q.t.id,asDef=Q.mode==='def'&&q.isDef;
+  if(ok){chime();Q.score+=100+Q.streak*10;Q.streak++;Q.correct++;$('q-fb').innerHTML='<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> Correct!</span>'}
+  else{buzz();Q.streak=0;$('q-fb').innerHTML=`<span class="text-rose-600"><i class="fa-solid fa-circle-xmark"></i> Answer: <b class="capitalize">${asDef?q.t.def:q.t.word}</b></span>`}
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;
+    if(+b.dataset.id===q.t.id)b.classList.add('!bg-emerald-100','!border-emerald-500','dark:!bg-emerald-950');
+    else if(b===btn)b.classList.add('!bg-rose-100','!border-rose-500','dark:!bg-rose-950')});
+  $('q-score').textContent=`${Q.score} pts`;$('q-streak').textContent=`Streak: ${Q.streak}`;
+  const nb=$('q-next');nb.disabled=false;nb.classList.remove('opacity-40');
+}
+function nextQ(){
+  if(++Q.i<10)return renderQ();
+  $('q-run').classList.add('hidden');$('q-end').classList.remove('hidden');
+  const pct=Q.correct*10;$('q-pct').textContent=pct+'%';
+  $('q-sum').textContent=`${Q.correct} correct · ${10-Q.correct} incorrect · ${Q.score} pts (${Q.mode==='ccq'?'CCQ':'Definition'} quiz)`;
+  if(!S.best||pct>=S.best.pct){S.best={pct,mode:Q.mode,date:new Date().toLocaleDateString()};save('best',S.best)}
+  if(pct>=80)chime();
+}
+
+/* ---------- unscramble ---------- */
+let SC={};
+function scInit(){
+  const w=W[Math.floor(Math.random()*W.length)];
+  let l=shuffle(w.word.split(''));if(l.join('')===w.word)l.reverse();
+  SC={w,placed:[],bank:l.map((c,i)=>({id:i,c}))};
+  $('sc-def').textContent='"'+w.def+'"';$('sc-fb').textContent='';scDraw();
+}
+function scDraw(){
+  const tile=(i,fn,cls)=>`<button onclick="${fn}(${i})" class="w-10 h-10 rounded-xl font-extrabold text-lg shadow ${cls}">`;
+  $('sc-slots').innerHTML=SC.placed.map((x,i)=>tile(i,'scBack','bg-purple-600 text-white')+x.c.toUpperCase()+'</button>').join('');
+  $('sc-bank').innerHTML=SC.bank.map(x=>tile(x.id,'scPick','bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600')+x.c.toUpperCase()+'</button>').join('');
+}
+function scPick(id){
+  const i=SC.bank.findIndex(x=>x.id===id);if(i<0)return;
+  SC.placed.push(SC.bank.splice(i,1)[0]);scDraw();
+  if(SC.placed.length===SC.w.word.length){
+    const g=SC.placed.map(x=>x.c).join('');
+    $('sc-fb').innerHTML=g===SC.w.word?'<span class="text-emerald-600"><i class="fa-solid fa-circle-check"></i> Correct! Outstanding.</span>':'<span class="text-rose-600">Not quite. Try swapping letters.</span>';
+    g===SC.w.word?chime():buzz();
+  }else $('sc-fb').textContent='';
+}
+function scBack(i){SC.bank.push(SC.placed.splice(i,1)[0]);scDraw();$('sc-fb').textContent=''}
+function scReset(){SC.bank=SC.bank.concat(SC.placed);SC.placed=[];$('sc-fb').textContent='';scDraw()}
+
+/* ---------- progress ---------- */
+function renderProg(){
+  $('p-m').textContent=Math.round(S.mast.length/W.length*100)+'%';
+  $('p-s').textContent=S.star.length;
+  $('p-q').textContent=S.best?`${S.best.pct}% (${S.best.mode==='ccq'?'CCQ':'Def'}, ${S.best.date})`:'N/A';
+  $('p-body').innerHTML=W.map(w=>`<tr class="border-t border-slate-100 dark:border-slate-800"><td class="p-2 font-mono font-bold text-indigo-600">#${w.id}</td><td class="p-2 font-bold capitalize">${w.word}</td><td class="p-2 italic text-slate-400">${w.pos}</td><td class="p-2">${S.mast.includes(w.id)?'<span class="chip bg-emerald-100 text-emerald-700 border-emerald-300">Mastered</span>':'<span class="chip bg-slate-100 text-slate-500 border-slate-200">Learning</span>'}</td><td class="p-2">${S.star.includes(w.id)?'<i class="fa-solid fa-star text-amber-400"></i>':'<i class="fa-regular fa-star text-slate-300"></i>'}</td></tr>`).join('');
+}
+
+applyDark();stats();renderDash();
+</script>
+</body>
+</html>

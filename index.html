@@ -8,6 +8,7 @@
 <script>tailwind.config={darkMode:'class'}</script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style type="text/tailwindcss">
   body{font-family:'Plus Jakarta Sans',sans-serif;padding-bottom:env(safe-area-inset-bottom,0)}
   h1,h2,h3,.hd{font-family:'Outfit',sans-serif}
@@ -40,6 +41,7 @@
       <button class="tab on" data-v="dash" onclick="show('dash')"><i class="fa-solid fa-border-all"></i> Dashboard</button>
       <button class="tab" data-v="flash" onclick="show('flash')"><i class="fa-solid fa-clone"></i> Flashcards</button>
       <button class="tab" data-v="quiz" onclick="show('quiz')"><i class="fa-solid fa-pen-to-square"></i> Quizzes</button>
+      <button class="tab" data-v="test" onclick="show('test')"><i class="fa-solid fa-file-pen"></i> Unit Test</button>
       <button class="tab" data-v="scr" onclick="show('scr')"><i class="fa-solid fa-font"></i> Unscramble</button>
       <button class="tab" data-v="prog" onclick="show('prog')"><i class="fa-solid fa-chart-line"></i> Progress</button>
     </nav>
@@ -142,6 +144,30 @@
       <div class="overflow-x-auto"><table class="w-full text-xs text-left"><thead><tr class="bg-slate-100 dark:bg-slate-800"><th class="p-2">#</th><th class="p-2">Word</th><th class="p-2">POS</th><th class="p-2">Status</th><th class="p-2">Starred</th></tr></thead><tbody id="p-body"></tbody></table></div>
     </div>
   </section>
+  <!-- UNIT TEST -->
+  <section id="v-test" class="hidden max-w-3xl mx-auto space-y-4">
+    <div id="t-setup" class="card space-y-4 text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl"><i class="fa-solid fa-file-pen"></i></div>
+      <div>
+        <span class="text-xs font-extrabold uppercase tracking-widest text-indigo-600">Level D &middot; Unit 3</span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold mt-1">Vocabulary Unit Test</h2>
+        <p class="text-sm text-slate-500 mt-1 max-w-md mx-auto">Complete every part, submit, then download your answer sheet as a PDF to upload to Google Classroom.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-3 text-left max-w-md mx-auto">
+        <div><label class="text-xs font-bold uppercase text-slate-500 block mb-1">Student Full Name</label><input id="t-name" placeholder="e.g. Omar Ali" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold"></div>
+        <div><label class="text-xs font-bold uppercase text-slate-500 block mb-1">Class / Section</label><input id="t-class" placeholder="e.g. 9A" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold"></div>
+      </div>
+      <div id="t-note" class="hidden text-xs font-bold text-amber-700 bg-amber-50 border border-amber-300 rounded-xl p-3 max-w-md mx-auto">A test was already in progress in this browser. Revision stays locked until you start again and submit the test.</div>
+      <div id="t-err" class="hidden text-xs font-bold text-rose-500">Please enter your full name and class to begin.</div>
+      <button class="btn !py-3 !px-8" onclick="startTest()">Start Test <i class="fa-solid fa-arrow-right"></i></button>
+      <div class="text-left max-w-md mx-auto text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 space-y-1">
+        <b class="block mb-1" id="t-structh"></b>
+        <div id="t-structb"></div>
+      </div>
+    </div>
+    <div id="t-run" class="hidden space-y-4"></div>
+    <div id="t-res" class="hidden space-y-4"></div>
+  </section>
 </main>
 
 <footer class="text-center text-xs text-slate-500 py-6">Vocabulary Workshop Level D Unit 3 Interactive Companion &middot; Created by Amanullah Khan</footer>
@@ -187,7 +213,8 @@ function speak(w){if(!('speechSynthesis' in window))return;speechSynthesis.cance
 function applyDark(){document.documentElement.classList.toggle('dark',S.dark)}
 function toggleDark(){S.dark=!S.dark;save('dark',S.dark);applyDark()}
 function show(v){
-  ['dash','flash','quiz','scr','prog'].forEach(x=>$('v-'+x).classList.toggle('hidden',x!==v));
+  if(testLock&&v!=='test')return;
+  ['dash','flash','quiz','test','scr','prog'].forEach(x=>$('v-'+x).classList.toggle('hidden',x!==v));
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
   if(v==='dash')renderDash(); if(v==='flash')fcLoad(S.fc); if(v==='scr')scInit(); if(v==='prog')renderProg();
 }
@@ -325,7 +352,205 @@ function renderProg(){
   $('p-body').innerHTML=W.map(w=>`<tr class="border-t border-slate-100 dark:border-slate-800"><td class="p-2 font-mono font-bold text-indigo-600">#${w.id}</td><td class="p-2 font-bold capitalize">${w.word}</td><td class="p-2 italic text-slate-400">${w.pos}</td><td class="p-2">${S.mast.includes(w.id)?'<span class="chip bg-emerald-100 text-emerald-700 border-emerald-300">Mastered</span>':'<span class="chip bg-slate-100 text-slate-500 border-slate-200">Learning</span>'}</td><td class="p-2">${S.star.includes(w.id)?'<i class="fa-solid fa-star text-amber-400"></i>':'<i class="fa-regular fa-star text-slate-300"></i>'}</td></tr>`).join('');
 }
 
+/* ---------- UNIT TEST ---------- */
+const T=[
+{k:'A',t:'Sentence Completion',ins:'Choose the word that best completes each sentence.',type:'mcq',items:[
+ {q:"The customer was so ____ about the late delivery that he demanded a full refund.",a:"irate",o:["irate","eminent","pauper","rift"]},
+ {q:"Villagers feared that a ____ would raid the supply wagons during the night.",a:"marauder",o:["marauder","adherent","pauper","semblance"]},
+ {q:"She worked for years to ____ every obstacle between her and a medical degree.",a:"surmount",o:["surmount","usurp","condone","fabricate"]},
+ {q:"The editor had to ____ the long report so that it fitted on a single page.",a:"abridge",o:["abridge","terminate","exorcise","pilfer"]},
+ {q:"Teachers cannot ____ cheating, even when students claim that everyone does it.",a:"condone",o:["condone","dissent","usurp","abridge"]},
+ {q:"A bitter quarrel left a ____ between the two brothers that lasted for years.",a:"rift",o:["rift","gluttony","semblance","pauper"]}]},
+{k:'B',t:'Replace the Underlined Words',ins:'Choose the unit word that could replace the underlined words without changing the meaning.',type:'mcq',items:[
+ {q:"The two drivers had a <u>noisy, angry argument</u> at the traffic light.",a:"altercation",o:["altercation","rift","dissent","gluttony"]},
+ {q:"Someone began to <u>steal small items</u> from the lockers every week.",a:"pilfer",o:["pilfer","fabricate","exorcise","terminate"]},
+ {q:"The baby had a <u>sweet, angelic</u> face.",a:"cherubic",o:["cherubic","irate","trite","eminent"]},
+ {q:"His <u>habit of eating far too much</u> at the buffet shocked the waiters.",a:"gluttony",o:["gluttony","semblance","rift","altercation"]}]},
+{k:'C',t:'Opposites',ins:'Choose the word that is closest to the OPPOSITE in meaning of the word in bold.',type:'mcq',items:[
+ {q:"Opposite of <b>begin</b>",a:"terminate",o:["terminate","dissent","pilfer","condone"]},
+ {q:"Opposite of <b>agree</b>",a:"dissent",o:["dissent","condone","adherent","semblance"]},
+ {q:"Opposite of <b>millionaire</b>",a:"pauper",o:["pauper","marauder","adherent","rift"]}]},
+{k:'D',t:'True or False: Is the Word Used Correctly?',ins:'Decide whether the underlined word is used correctly in the sentence.',type:'tf',items:[
+ {q:"The <u>eminent</u> author was completely unknown to almost everyone.",a:false},
+ {q:"The meeting will <u>terminate</u> as soon as the last speaker finishes.",a:true},
+ {q:"Her <u>cherubic</u> smile made the toddler look like a sweet little angel.",a:true}]},
+{k:'E',t:'Odd One Out',ins:'Three of the four words are connected in meaning. Choose the word that does NOT belong.',type:'mcq',items:[
+ {q:"Which word does NOT belong?",a:"cherubic",o:["irate","altercation","dissent","cherubic"]},
+ {q:"Which word does NOT belong?",a:"condone",o:["pilfer","usurp","marauder","condone"]}]},
+{k:'F',t:'Analogies',ins:'Choose the word that completes the relationship in the second pair.',type:'mcq',items:[
+ {q:"<b>calm</b> is to <b>irate</b> as <b>fresh</b> is to ____",a:"trite",o:["trite","eminent","rift","pauper"]},
+ {q:"<b>angry</b> is to <b>irate</b> as <b>famous</b> is to ____",a:"eminent",o:["eminent","cherubic","trite","pauper"]}]},
+{k:'G',t:'Fix the Misused Word',ins:'The word in bold is used incorrectly. Choose the unit word that should replace it.',type:'mcq',items:[
+ {q:"Her <b>trite</b> smile made the little girl look like an angel.",a:"cherubic",o:["cherubic","irate","eminent","pauper"]},
+ {q:"The two friends had a <b>gluttony</b> that left them unable to speak to each other.",a:"rift",o:["rift","marauder","adherent","semblance"]}]},
+{k:'H',t:'Matching',ins:'Choose the word from the bank that matches each definition. Each word is used once.',type:'sel',bank:["fabricate","exorcise","adherent","usurp"],items:[
+ {q:"To make up a false story, or to build something",a:"fabricate"},
+ {q:"To drive out an evil spirit, or to get rid of something troubling",a:"exorcise"},
+ {q:"A supporter or follower of a person or cause",a:"adherent"},
+ {q:"To seize power or a position wrongfully",a:"usurp"}]},
+{k:'I',t:'Three-Word Paragraphs',ins:'Write a short paragraph (3 to 5 sentences) that uses ALL THREE words correctly. Marked by your teacher (5 marks each).',type:'para',items:[
+ {p:"Write about an argument between two people and how it ended.",w:["altercation","irate","terminate"],m:5},
+ {p:"Write about a respected leader and the people who follow or disagree with them.",w:["eminent","adherent","dissent"],m:5}]},
+{k:'J',t:'Write Your Own Sentences',ins:'Write one original sentence that shows the meaning of each word. Marked by your teacher (2 marks each).',type:'para',items:[
+ {p:"Write one sentence using this word.",w:["gluttony"],m:2},
+ {p:"Write one sentence using this word.",w:["semblance"],m:2}]}
+];
+const AUTO=T.filter(s=>s.type!=='para').reduce((n,s)=>n+s.items.length,0);
+const PK=T.filter(s=>s.type==='para').map(s=>s.k).join(' and ');
+const PARA=T.filter(s=>s.type==='para').reduce((n,s)=>n+s.items.reduce((m,i)=>m+i.m,0),0);
+$('t-structh').textContent=`Test structure (${AUTO} auto-marked + ${PARA} teacher-marked = ${AUTO+PARA} marks):`;
+$('t-structb').innerHTML=T.map(s=>`<div>${s.k}. ${s.t} (${s.items.length})</div>`).join('');
+let TS={ans:{}};
+let testLock=false;
+function setLock(b){testLock=b;save('lock',b);document.querySelectorAll('.tab').forEach(t=>{if(t.dataset.v!=='test')t.classList.toggle('hidden',b)})}
+window.addEventListener('beforeunload',e=>{if(testLock){e.preventDefault();e.returnValue=''}});
+const blank='<span class="inline-block w-16 border-b-2 border-slate-400 align-baseline"></span>';
+const qHtml=q=>q.replace('____',blank);
+const cl=s=>String(s).replace(/<u>(.*?)<\/u>/g,'[$1]').replace(/<[^>]+>/g,'').replace(/[^\x00-\xFF]/g,'?');
+const fmtDate=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+
+function startTest(){
+  const name=$('t-name').value.trim(),cls=$('t-class').value.trim();
+  if(!name||!cls){$('t-err').classList.remove('hidden');return}
+  $('t-err').classList.add('hidden');
+  if(!confirm('Once you start, all revision sections (word list, flashcards, quizzes, games) are locked until you submit the test. Start now?'))return;
+  setLock(true);$('t-note').classList.add('hidden');
+  TS={name,cls,start:new Date(),ans:{},done:false};
+  T.forEach(s=>{if(s.type==='mcq')s.items.forEach(it=>it.sh=shuffle(it.o));if(s.type==='sel')s.sh=shuffle(s.bank)});
+  $('t-setup').classList.add('hidden');$('t-res').classList.add('hidden');$('t-run').classList.remove('hidden');
+  renderTest();window.scrollTo(0,0);
+}
+function renderTest(){
+  let n=0;
+  const parts=T.map(s=>{
+    const head=`<div class="rounded-2xl bg-indigo-600 text-white px-4 py-2.5"><div class="font-extrabold text-sm">Part ${s.k}: ${s.t}</div><div class="text-[11px] text-indigo-100">${s.ins}</div></div>`;
+    const qs=s.items.map((it,i)=>{
+      const key=s.k+(i+1);n++;
+      if(s.type==='para'){
+        return `<div class="card !p-4 space-y-2"><div class="text-sm font-bold">${n}. ${it.p} <span class="text-[11px] text-slate-400">(${it.m} marks)</span></div>
+          <div class="flex flex-wrap gap-1" id="chips-${key}">${it.w.map(w=>`<span data-w="${w}" class="chip bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800">${w}</span>`).join('')}</div>
+          <textarea id="ta-${key}" rows="${it.w.length>1?5:2}" oninput="paraUpd('${key}')" placeholder="Type your answer here..." class="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm"></textarea>
+          <div id="wc-${key}" class="text-[11px] text-slate-400">0 words</div></div>`;
+      }
+      if(s.type==='sel')return `<div class="card !p-4 flex flex-col sm:flex-row sm:items-center gap-2 justify-between"><div class="text-sm font-bold">${n}. ${it.q}</div><select onchange="setAns('${key}',this.value)" class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-bold capitalize"><option value="">Choose...</option>${s.sh.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>`;
+      const opts=s.type==='tf'?['True','False']:it.sh;
+      return `<div class="card !p-4 space-y-2.5"><div class="text-sm font-bold leading-relaxed">${n}. ${qHtml(it.q)}</div>
+        <div class="grid ${s.type==='tf'?'grid-cols-2':'sm:grid-cols-2'} gap-2">${opts.map((o,j)=>`<label class="opt flex items-center gap-2 cursor-pointer !p-2.5"><input type="radio" name="${key}" value="${o}" onchange="setAns('${key}',this.value)"><span class="text-xs text-slate-400 font-extrabold">${s.type==='tf'?'':'ABCD'[j]+'.'}</span><span class="font-bold text-sm">${o}</span></label>`).join('')}</div></div>`;
+    }).join('');
+    const extra=s.bank?`<div class="card !p-4 text-sm leading-relaxed">${s.pre||''}<div class="${s.pre?'mt-2 ':''}text-xs"><b>Word bank:</b> ${s.sh.join(' &middot; ')}</div></div>`:'';
+    return `<div class="space-y-3">${head}${extra}${qs}</div>`;
+  }).join('');
+  $('t-run').innerHTML=`<div class="card !p-3 sticky top-[104px] z-30 flex justify-between items-center text-xs font-bold"><span><i class="fa-solid fa-user-graduate text-indigo-500"></i> ${TS.name} (${TS.cls}) &middot; <i class="fa-solid fa-lock text-amber-500"></i> Revision locked</span><span id="t-count" class="text-indigo-600">Answered 0 / ${AUTO}</span></div>${parts}
+    <div class="card text-center space-y-2"><p class="text-xs text-slate-500">Check your answers carefully. You cannot change them after submitting.</p><button class="btn !py-3 !px-8" onclick="submitTest()"><i class="fa-solid fa-paper-plane"></i> Submit Test</button></div>`;
+}
+function setAns(k,v){TS.ans[k]=v;$('t-count').textContent=`Answered ${Object.keys(TS.ans).length} / ${AUTO}`}
+const usedWords=(ws,t)=>ws.filter(x=>new RegExp('\\b'+x,'i').test(t));
+function paraUpd(key){
+  const t=$('ta-'+key).value.trim(),wc=t?t.split(/\s+/).length:0;
+  $('wc-'+key).textContent=wc+(wc===1?' word':' words');
+  const u=usedWords([...$('chips-'+key).children].map(c=>c.dataset.w),t);
+  [...$('chips-'+key).children].forEach(c=>c.className='chip '+(u.includes(c.dataset.w)?'bg-emerald-100 text-emerald-700 border-emerald-300':'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800'));
+}
+function submitTest(){
+  const un=AUTO-Object.keys(TS.ans).length;
+  if(un>0&&!confirm(`You have ${un} unanswered question${un>1?'s':''}. Submit anyway?`))return;
+  TS.done=true;setLock(false);TS.end=new Date();TS.res=[];TS.score=0;
+  T.forEach(s=>s.items.forEach((it,i)=>{
+    const key=s.k+(i+1);
+    if(s.type==='para'){
+      const t=$('ta-'+key).value.trim();
+      TS.res.push({k:s.k,key,type:'para',q:it.p,w:it.w,text:t,wc:t?t.split(/\s+/).length:0,used:usedWords(it.w,t),m:it.m});
+    }else{
+      const mine=TS.ans[key],correct=s.type==='tf'?(it.a?'True':'False'):it.a,ok=mine===correct;
+      if(ok)TS.score++;
+      TS.res.push({k:s.k,key,type:s.type,q:it.q,mine:mine||'(no answer)',correct,ok});
+    }
+  }));
+  renderResult();
+}
+function renderResult(){
+  const pct=Math.round(TS.score/AUTO*100);
+  let last='';
+  const rev=TS.res.map(r=>{
+    const sec=T.find(s=>s.k===r.k);
+    const h=r.k!==last?`<div class="font-extrabold text-sm text-indigo-600 pt-3">Part ${r.k}: ${sec.t}</div>`:'';last=r.k;
+    if(r.type==='para')return h+`<div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-1"><div class="font-bold">${r.q} <span class="text-slate-400">[${r.w.join(', ')}]</span></div><div class="italic whitespace-pre-wrap">${r.text||'(no answer)'}</div><div class="text-slate-400">${r.wc} words &middot; words used: ${r.used.length}/${r.w.length} &middot; awaiting teacher mark (${r.m})</div></div>`;
+    return h+`<div class="rounded-2xl border-l-4 ${r.ok?'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30':'border-rose-500 bg-rose-50 dark:bg-rose-950/30'} p-3 text-xs space-y-0.5"><div class="font-bold">${qHtml(r.q)}</div><div>Your answer: <b>${r.mine}</b> ${r.ok?'<i class="fa-solid fa-circle-check text-emerald-600"></i>':'<i class="fa-solid fa-circle-xmark text-rose-600"></i>'}</div>${r.ok?'':`<div>Correct answer: <b class="text-emerald-700 dark:text-emerald-400">${r.correct}</b></div>`}</div>`;
+  }).join('');
+  $('t-run').classList.add('hidden');$('t-res').classList.remove('hidden');
+  $('t-res').innerHTML=`<div class="card text-center space-y-3">
+    <i class="fa-solid fa-trophy text-4xl text-amber-500"></i>
+    <h2 class="text-2xl font-extrabold">Test Submitted</h2>
+    <p class="text-sm text-slate-500">${TS.name} &middot; ${TS.cls} &middot; ${fmtDate(TS.end)}</p>
+    <div class="text-5xl font-extrabold text-indigo-600 hd">${TS.score} / ${AUTO}</div>
+    <p class="text-sm font-bold text-slate-500">${pct}% on auto-marked parts &middot; Parts ${PK} (${PARA} marks) will be marked by your teacher</p>
+    <div class="flex gap-2 justify-center flex-wrap"><button class="btn !py-3 !px-6" onclick="makePDF()"><i class="fa-solid fa-file-pdf"></i> Download PDF for Google Classroom</button><button class="btn2" onclick="resetTest()">New Attempt</button></div>
+    <p class="text-[11px] text-slate-400">Download the PDF, then upload it to your Google Classroom assignment.</p></div>
+    <div class="card space-y-2"><h3 class="font-extrabold">Review Your Answers</h3>${rev}</div>`;
+  window.scrollTo(0,0);if(pct>=80)chime();
+}
+function resetTest(){['t-run','t-res'].forEach(x=>$(x).classList.add('hidden'));$('t-setup').classList.remove('hidden');window.scrollTo(0,0)}
+
+function makePDF(){
+  if(!window.jspdf){alert('The PDF library could not load. Please check your internet connection and try again.');return}
+  const d=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),PW=210,M=15,MW=PW-2*M;
+  const NV=[30,27,75],GD=[217,119,6],GR=[4,120,87],RD=[190,18,60],SL=[51,65,85],GY=[100,116,139];
+  let y=0;
+  const need=h=>{if(y+h>282){d.addPage();y=18}};
+  const para=(s,sz,st,col,ind=0)=>{d.setFont('helvetica',st);d.setFontSize(sz);d.setTextColor(...col);const lh=sz*.43;d.splitTextToSize(cl(s),MW-ind).forEach(l=>{need(lh);d.text(l,M+ind,y);y+=lh})};
+  // header
+  d.setFillColor(...NV);d.rect(0,0,PW,30,'F');d.setFillColor(...GD);d.rect(0,30,PW,1.4,'F');
+  d.setTextColor(255,255,255);d.setFont('helvetica','bold');d.setFontSize(17);d.text('Vocabulary Workshop - Level D, Unit 3',M,13);
+  d.setFont('helvetica','normal');d.setFontSize(10);d.text('Unit Test - Student Answer Sheet',M,21);
+  // student box
+  y=38;d.setDrawColor(203,213,225);d.setFillColor(248,250,252);d.roundedRect(M,y,MW,27,2,2,'FD');
+  const fld=(lab,val,x,yy)=>{d.setFont('helvetica','bold');d.setFontSize(7.5);d.setTextColor(...GY);d.text(lab.toUpperCase(),x,yy);d.setFont('helvetica','bold');d.setFontSize(11);d.setTextColor(...NV);d.text(cl(val),x,yy+5.5)};
+  fld('Student Name',TS.name,M+5,y+7);fld('Class / Section',TS.cls,M+5+MW/2,y+7);
+  fld('Date',fmtDate(TS.end),M+5,y+18);fld('Submitted at',TS.end.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'  (started '+TS.start.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+')',M+5+MW/2,y+18);
+  y+=33;
+  // score
+  const pct=Math.round(TS.score/AUTO*100);
+  d.setFillColor(238,242,255);d.setDrawColor(165,180,252);d.roundedRect(M,y,MW,16,2,2,'FD');
+  d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(...NV);d.text(`Auto-marked score: ${TS.score} / ${AUTO}  (${pct}%)`,M+5,y+7);
+  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(...SL);d.text(`Parts ${PK} (paragraphs and sentences): ____ / ${PARA}  - to be marked by teacher`,M+5,y+13);
+  y+=24;
+  // sections
+  let last='',num=0;
+  TS.res.forEach(r=>{
+    num++;
+    if(r.k!==last){
+      last=r.k;const sec=T.find(s=>s.k===r.k);need(22);
+      d.setFillColor(...NV);d.rect(M,y,MW,7.5,'F');d.setFont('helvetica','bold');d.setFontSize(10.5);d.setTextColor(255,255,255);d.text(`Part ${r.k}: ${sec.t}`,M+3,y+5.2);y+=10.5;
+      para(sec.ins,8.5,'italic',GY);y+=1.5;if(sec.pre){para(sec.pre,9,'normal',SL);y+=1}if(sec.bank){para('Word bank: '+sec.bank.join(', '),8.5,'bold',GY);y+=1.5}
+    }
+    need(16);
+    if(r.type==='para'){
+      para(`${num}. ${r.q}`,9.5,'bold',SL);
+      para('Words to use: '+r.w.join(', '),9,'normal',GY,4);
+      para(r.text||'(no answer)',10,'normal',[15,23,42],4);
+      para(`Word count: ${r.wc}  |  Words detected: ${r.used.length}/${r.w.length}${r.used.length?' ('+r.used.join(', ')+')':''}  |  Teacher mark: ____ / ${r.m}`,8.5,'normal',GY,4);
+    }else{
+      para(`${num}. ${r.q}`,9.5,'bold',SL);
+      para('Your answer: '+r.mine+(r.ok?'   [Correct]':'   [Incorrect]'),9.5,'normal',r.ok?GR:RD,4);
+      if(!r.ok)para('Correct answer: '+r.correct,9.5,'normal',GR,4);
+    }
+    y+=3;
+  });
+  // teacher comments
+  need(40);y+=3;d.setDrawColor(...GD);d.setLineWidth(.6);d.line(M,y,M+MW,y);y+=6;
+  para('Teacher comments',10.5,'bold',NV);y+=2;
+  d.setDrawColor(203,213,225);d.setLineWidth(.2);
+  for(let i=0;i<3;i++){need(8);d.line(M,y+5,M+MW,y+5);y+=8}
+  // footer
+  const pg=d.getNumberOfPages();
+  for(let i=1;i<=pg;i++){d.setPage(i);d.setFont('helvetica','normal');d.setFontSize(8);d.setTextColor(...GY);
+    d.text(cl(`${TS.name} | ${TS.cls} | Level D Unit 3 Vocabulary Test`),M,291);d.text(`Page ${i} of ${pg}`,PW-M,291,{align:'right'})}
+  const safe=s=>cl(s).replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  d.save(`${safe(TS.name)}_${safe(TS.cls)}_Unit3_Vocabulary_Test.pdf`);
+}
+
 applyDark();stats();renderDash();
+if(load('lock',false)){setLock(true);show('test');$('t-note').classList.remove('hidden')}
 </script>
 </body>
 </html>

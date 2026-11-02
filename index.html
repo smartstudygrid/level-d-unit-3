@@ -353,6 +353,8 @@ function renderProg(){
 }
 
 /* ---------- UNIT TEST ---------- */
+// Paste your Google Apps Script Web app URL (ends with /exec) between the quotes to switch on AI marking of the writing parts.
+const GRADER_URL='https://script.google.com/macros/s/AKfycbxgbRYgdpV2h5u4PHc1Se8R2X6W0XqONT14ALaeFVPnlNDK71M3-qaFlhxCkAFlFzALpA/exec';
 const T=[
 {k:'A',t:'Sentence Completion',ins:'Choose the word that best completes each sentence.',type:'mcq',items:[
  {q:"The customer was so ____ about the late delivery that he demanded a full refund.",a:"irate",o:["irate","eminent","pauper","rift"]},
@@ -466,15 +468,37 @@ function submitTest(){
       TS.res.push({k:s.k,key,type:s.type,q:it.q,mine:mine||'(no answer)',correct,ok});
     }
   }));
+  TS.gs=GRADER_URL?'pending':'off';
   renderResult();
+  if(GRADER_URL)gradeWriting();
 }
-function renderResult(){
+async function gradeWriting(){
+  const items=TS.res.filter(r=>r.type==='para').map(r=>({id:r.key,prompt:r.q,words:r.w,max:r.m,text:r.text}));
+  try{
+    const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),70000);
+    const resp=await fetch(GRADER_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({name:TS.name,cls:TS.cls,items}),signal:ctl.signal});
+    clearTimeout(to);
+    const j=await resp.json();
+    if(!j.ok)throw new Error(j.error||'grader error');
+    let tot=0,n=0;
+    j.items.forEach(g=>{const r=TS.res.find(x=>x.key===g.id);if(r){r.ai={mark:g.mark,comment:g.comment};tot+=g.mark;n++}});
+    if(!n)throw new Error('no marks returned');
+    TS.aiTotal=tot;TS.gs='done';
+  }catch(e){TS.gs='failed'}
+  renderResult(true);
+}
+function markLine(pct){
+  if(TS.gs==='pending')return `<i class="fa-solid fa-spinner fa-spin text-indigo-500"></i> Marking your writing with AI... this takes 10 to 30 seconds. The PDF button unlocks when it is done.`;
+  if(TS.gs==='done')return `${pct}% on auto-marked parts &middot; Writing (AI-marked, provisional): <b>${TS.aiTotal} / ${PARA}</b> &middot; Total: <b>${TS.score+TS.aiTotal} / ${AUTO+PARA}</b><br><span class="text-[11px] font-normal">Your teacher will confirm the writing marks.</span>`;
+  return `${pct}% on auto-marked parts &middot; Parts ${PK} (${PARA} marks) will be marked by your teacher${TS.gs==='failed'?' (automatic writing marking was unavailable)':''}`;
+}
+function renderResult(noScroll){
   const pct=Math.round(TS.score/AUTO*100);
   let last='';
   const rev=TS.res.map(r=>{
     const sec=T.find(s=>s.k===r.k);
     const h=r.k!==last?`<div class="font-extrabold text-sm text-indigo-600 pt-3">Part ${r.k}: ${sec.t}</div>`:'';last=r.k;
-    if(r.type==='para')return h+`<div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-1"><div class="font-bold">${r.q} <span class="text-slate-400">[${r.w.join(', ')}]</span></div><div class="italic whitespace-pre-wrap">${r.text||'(no answer)'}</div><div class="text-slate-400">${r.wc} words &middot; words used: ${r.used.length}/${r.w.length} &middot; awaiting teacher mark (${r.m})</div></div>`;
+    if(r.type==='para')return h+`<div class="rounded-2xl border border-slate-200 dark:border-slate-700 p-3 text-xs space-y-1"><div class="font-bold">${r.q} <span class="text-slate-400">[${r.w.join(', ')}]</span></div><div class="italic whitespace-pre-wrap">${r.text||'(no answer)'}</div><div class="text-slate-400">${r.wc} words &middot; words used: ${r.used.length}/${r.w.length} &middot; ${r.ai?`AI mark: <b>${r.ai.mark} / ${r.m}</b></div><div class="mt-1 text-slate-600 dark:text-slate-300">${r.ai.comment}</div>`:`awaiting teacher mark (${r.m})</div>`}</div>`;
     return h+`<div class="rounded-2xl border-l-4 ${r.ok?'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30':'border-rose-500 bg-rose-50 dark:bg-rose-950/30'} p-3 text-xs space-y-0.5"><div class="font-bold">${qHtml(r.q)}</div><div>Your answer: <b>${r.mine}</b> ${r.ok?'<i class="fa-solid fa-circle-check text-emerald-600"></i>':'<i class="fa-solid fa-circle-xmark text-rose-600"></i>'}</div>${r.ok?'':`<div>Correct answer: <b class="text-emerald-700 dark:text-emerald-400">${r.correct}</b></div>`}</div>`;
   }).join('');
   $('t-run').classList.add('hidden');$('t-res').classList.remove('hidden');
@@ -483,11 +507,11 @@ function renderResult(){
     <h2 class="text-2xl font-extrabold">Test Submitted</h2>
     <p class="text-sm text-slate-500">${TS.name} &middot; ${TS.cls} &middot; ${fmtDate(TS.end)}</p>
     <div class="text-5xl font-extrabold text-indigo-600 hd">${TS.score} / ${AUTO}</div>
-    <p class="text-sm font-bold text-slate-500">${pct}% on auto-marked parts &middot; Parts ${PK} (${PARA} marks) will be marked by your teacher</p>
-    <div class="flex gap-2 justify-center flex-wrap"><button class="btn !py-3 !px-6" onclick="makePDF()"><i class="fa-solid fa-file-pdf"></i> Download PDF for Google Classroom</button><button class="btn2" onclick="resetTest()">New Attempt</button></div>
+    <p class="text-sm font-bold text-slate-500">${markLine(pct)}</p>
+    <div class="flex gap-2 justify-center flex-wrap"><button class="btn !py-3 !px-6" onclick="makePDF()" ${TS.gs==='pending'?'disabled style="opacity:.45;cursor:not-allowed"':''}><i class="fa-solid fa-file-pdf"></i> Download PDF for Google Classroom</button><button class="btn2" onclick="resetTest()">New Attempt</button></div>
     <p class="text-[11px] text-slate-400">Download the PDF, then upload it to your Google Classroom assignment.</p></div>
     <div class="card space-y-2"><h3 class="font-extrabold">Review Your Answers</h3>${rev}</div>`;
-  window.scrollTo(0,0);if(pct>=80)chime();
+  if(!noScroll){window.scrollTo(0,0);if(pct>=80)chime()}
 }
 function resetTest(){['t-run','t-res'].forEach(x=>$(x).classList.add('hidden'));$('t-setup').classList.remove('hidden');window.scrollTo(0,0)}
 
@@ -512,7 +536,7 @@ function makePDF(){
   const pct=Math.round(TS.score/AUTO*100);
   d.setFillColor(238,242,255);d.setDrawColor(165,180,252);d.roundedRect(M,y,MW,16,2,2,'FD');
   d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(...NV);d.text(`Auto-marked score: ${TS.score} / ${AUTO}  (${pct}%)`,M+5,y+7);
-  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(...SL);d.text(`Parts ${PK} (paragraphs and sentences): ____ / ${PARA}  - to be marked by teacher`,M+5,y+13);
+  d.setFont('helvetica','normal');d.setFontSize(9);d.setTextColor(...SL);d.text(TS.gs==='done'?`Writing parts ${PK} (AI-marked, teacher to confirm): ${TS.aiTotal} / ${PARA}   |   Total: ${TS.score+TS.aiTotal} / ${AUTO+PARA}`:`Parts ${PK} (paragraphs and sentences): ____ / ${PARA}  - to be marked by teacher`,M+5,y+13);
   y+=24;
   // sections
   let last='',num=0;
@@ -528,7 +552,8 @@ function makePDF(){
       para(`${num}. ${r.q}`,9.5,'bold',SL);
       para('Words to use: '+r.w.join(', '),9,'normal',GY,4);
       para(r.text||'(no answer)',10,'normal',[15,23,42],4);
-      para(`Word count: ${r.wc}  |  Words detected: ${r.used.length}/${r.w.length}${r.used.length?' ('+r.used.join(', ')+')':''}  |  Teacher mark: ____ / ${r.m}`,8.5,'normal',GY,4);
+      para(`Word count: ${r.wc}  |  Words detected: ${r.used.length}/${r.w.length}${r.used.length?' ('+r.used.join(', ')+')':''}  |  Teacher confirmed: ____ / ${r.m}`,8.5,'normal',GY,4);
+      if(r.ai)para(`AI mark: ${r.ai.mark} / ${r.m}  -  ${r.ai.comment}`,8.5,'bold',[67,56,202],4);
     }else{
       para(`${num}. ${r.q}`,9.5,'bold',SL);
       para('Your answer: '+r.mine+(r.ok?'   [Correct]':'   [Incorrect]'),9.5,'normal',r.ok?GR:RD,4);
